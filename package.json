@@ -1,0 +1,63 @@
+{
+  "name": "@proof-holdings/proof-check",
+  "version": "0.1.1",
+  "description": "Check, from the terminal, whether a domain has published a Proof of Delegation for a package or endpoint — the places are looked up, and every token found is verified locally against the issuer's keys",
+  "type": "module",
+  "license": "MIT",
+  "author": "proof.holdings <hello@proof.holdings> (https://proof.holdings)",
+  "homepage": "https://proof.holdings",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ProofHoldings/proof-check.git"
+  },
+  "bugs": {
+    "email": "hello@proof.holdings",
+    "url": "https://proof.holdings/support"
+  },
+  "keywords": [
+    "proof-of-delegation",
+    "delegation",
+    "mcp",
+    "npm",
+    "pypi",
+    "supply-chain",
+    "cli"
+  ],
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "proof-check": "dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepublishOnly": "npm run build && npm test"
+  },
+  "dependencies": {
+    "@proof-holdings/delegation-verifier": "^0.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.5.0",
+    "vitest": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}

@@ -50,7 +50,8 @@ describe('exit 0 — delegated', () => {
     expect(report.exitCode).toBe(0);
     expect(report.answer).toBe('delegated');
     expect(report.issuer).toEqual({ issuer: 'proof.holdings', jwksUri: JWKS_URI, statusEndpoint: STATUS_ENDPOINT });
-    expect(report.tokens[0]).toMatchObject({ outcome: 'verified', delegation: { principal: 'postmarkapp.com', scope: ['send-email'] } });
+    expect(report.tokens[0]).toMatchObject({ outcome: 'verified', delegation: { principal: 'postmarkapp.com' } });
+    expect(report.tokens[0].delegation).not.toHaveProperty('scope');
     expect(net.calls).toContain(STATUS_ENDPOINT);
   });
 
@@ -127,6 +128,18 @@ describe('exit 2 — could not check', () => {
     expect(report.answer).toBe('could_not_check');
     expect(report.message).toBeTruthy();
     expect(net.calls).toEqual([]);
+  });
+
+  // The verifier classes it `invalid`; here it is "could not check": the token may be genuine, it is
+  // just of a schema this checker no longer reads, and its owner re-issues it.
+  it('a schema-1.x token is could-not-check with the reason shown, not "no delegation found"', async () => {
+    const token = await signJwt(delegationClaims({ delegation_schema_version: '1.0', scope: ['send-email'] }), key);
+    const report = await runCheck({ delegate: DELEGATE, apiOrigin: API, fetch: (await lookupWith([{ token }])).fetch });
+
+    expect(report.exitCode).toBe(2);
+    expect(report.answer).toBe('could_not_check');
+    expect(report.tokens[0]).toMatchObject({ outcome: 'unconfirmed', reason: 'unsupported_version' });
+    expect(report.message).toContain('unsupported_version');
   });
 
   it('a lookup listing a delegation without its token is unconfirmed, never "no delegation found"', async () => {
@@ -206,6 +219,15 @@ describe('--card', () => {
     const report = await runCardCheck({ card: { name: 'x' }, source: './server.json', delegate: DELEGATE, apiOrigin: API, fetch: net.fetch });
     expect(report.exitCode).toBe(1);
     expect(report.locations[0]).toMatchObject({ location: './server.json', result: 'nothing_published' });
+  });
+
+  it('a card carrying a schema-1.x token is could-not-check with the reason shown', async () => {
+    const token = await signJwt(delegationClaims({ delegation_schema_version: '1.0', scope: ['send-email'] }), key);
+    const net = mockFetch({});
+    const report = await runCardCheck({ card: card(token), source: './server.json', delegate: DELEGATE, apiOrigin: API, fetch: net.fetch });
+    expect(report.exitCode).toBe(2);
+    expect(report.tokens[0]).toMatchObject({ outcome: 'unconfirmed', reason: 'unsupported_version' });
+    expect(net.calls).toEqual([]);
   });
 
   it('a card carrying a token for another artifact: no delegation found', async () => {

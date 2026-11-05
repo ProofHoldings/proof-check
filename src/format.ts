@@ -12,7 +12,7 @@ const RESULT_TEXT: Record<string, string> = {
   found_in_force: 'delegation found, in force',
   found_not_in_force: 'delegation found, no longer in force',
   found_other_artifact: 'delegation for a different artifact',
-  found_unverifiable: 'content this issuer did not sign',
+  found_unverifiable: 'not a delegation this issuer can verify',
   nothing_published: 'nothing published',
   not_applicable: 'not applicable',
   unchecked: 'could not be read',
@@ -29,7 +29,7 @@ function day(iso: string): string {
 function tokenLine(token: CheckedToken): string {
   if (token.delegation) {
     const d = token.delegation;
-    return `  scope ${d.scope.join(', ')} · issued ${day(d.issuedAt)} · expires ${day(d.expiresAt)} · ${d.delegationId}`;
+    return `  signed ${day(d.issuedAt)} · expires ${day(d.expiresAt)} · ${d.delegationId}`;
   }
   const where = token.reportedPrincipal ? ` (reported as from ${token.reportedPrincipal})` : '';
   return `  A delegation${where} did not count here: ${token.reason ?? 'unknown'} — ${token.message ?? ''}`.trimEnd();

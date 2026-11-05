@@ -1,6 +1,6 @@
 {
   "name": "@proof-holdings/proof-check",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Check, from the terminal, whether a domain has published a Proof of Delegation for a package or endpoint — the places are looked up, and every token found is verified locally against the issuer's keys",
   "type": "module",
   "license": "MIT",
@@ -42,7 +42,7 @@
     "prepublishOnly": "npm run build && npm test"
   },
   "dependencies": {
-    "@proof-holdings/delegation-verifier": "^0.1.1"
+    "@proof-holdings/delegation-verifier": "^0.2.0"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",

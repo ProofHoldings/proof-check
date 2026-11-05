@@ -45,7 +45,7 @@ export interface CheckedToken {
   reason: string | null;
   message: string | null;
   /** Only for a token that verified: the claims its signature covers. */
-  delegation: { principal: string; scope: string[]; delegationId: string; issuedAt: string; expiresAt: string } | null;
+  delegation: { principal: string; delegationId: string; issuedAt: string; expiresAt: string } | null;
 }
 
 export interface CheckReport {
@@ -116,14 +116,17 @@ function tokenResult(result: VerificationResult, reportedPrincipal: string | nul
       message: null,
       delegation: {
         principal: delegation.principal,
-        scope: delegation.scope,
         delegationId: delegation.delegationId,
         issuedAt: delegation.issuedAt.toISOString(),
         expiresAt: delegation.expiresAt.toISOString(),
       },
     };
   }
-  return { reportedPrincipal, foundAt, outcome: result.outcome, reason: result.reason, message: result.message, delegation: null };
+  // A schema-1.x token may be genuine; it is one this checker no longer reads, so the answer is "could
+  // not check" rather than the verifier's `invalid`. Compared as a string so the check compiles
+  // against a verifier whose `FailureReason` predates the name.
+  const outcome = (result.reason as string) === 'unsupported_version' ? 'unconfirmed' : result.outcome;
+  return { reportedPrincipal, foundAt, outcome, reason: result.reason, message: result.message, delegation: null };
 }
 
 /** The answer the local outcomes support — see the module comment for why `unconfirmed` is never a negative. */

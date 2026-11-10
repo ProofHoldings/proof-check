@@ -65,7 +65,7 @@ export interface CheckReport {
 }
 
 export interface CheckOptions {
-  /** The identifier exactly as typed: `pkg:npm/<name>`, `pkg:pypi/<name>` or `https://<host><path>`. */
+  /** The identifier exactly as typed: `pkg:npm/<name>`, `pkg:pypi/<name>`, `pkg:golang/<module path>`, `pkg:composer/<vendor>/<name>` or `https://<host><path>`. */
   delegate: string;
   apiOrigin?: string;
   jwksUri?: string;

@@ -6,7 +6,8 @@
  *   proof-check <identifier> [--principal <domain>] [--json] [--api <origin>] [--jwks <url>]
  *   proof-check <identifier> --card <path-or-https-url> [--principal <domain>] [--json]
  *
- * `<identifier>` is `pkg:npm/<name>`, `pkg:pypi/<name>` or `https://<host><path>`, and it is the ONLY
+ * `<identifier>` is `pkg:npm/<name>`, `pkg:pypi/<name>`, `pkg:golang/<module path>`,
+ * `pkg:composer/<vendor>/<name>` or `https://<host><path>`, and it is the ONLY
  * source of the identity checked: every token found is verified against it locally. Exit codes:
  * 0 delegated, 1 no delegation found, 2 could not check (including a usage error — 1 is reserved for
  * the answer, so a typo can never read as "no delegation found").
@@ -22,7 +23,8 @@ Has a domain published a Proof of Delegation for this artifact? The places are l
 proof.holdings, and every token found is verified here, against the issuer's keys and the
 identifier you typed.
 
-  <identifier>          pkg:npm/<name>, pkg:pypi/<name> or https://<host><path>
+  <identifier>          pkg:npm/<name>, pkg:pypi/<name>, pkg:golang/<module path>,
+                        pkg:composer/<vendor>/<name> or https://<host><path>
 
 Options:
   --principal <domain>  only count a delegation from this domain

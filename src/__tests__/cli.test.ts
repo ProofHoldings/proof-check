@@ -26,6 +26,8 @@ describe('dist/cli.js', () => {
     expect(result.status).toBe(0);
     expect(result.stdout).toContain('Usage: proof-check <identifier>');
     expect(result.stdout).toContain('0 delegated · 1 no delegation found · 2 could not check');
+    expect(result.stdout).toContain('pkg:golang/<module path>');
+    expect(result.stdout).toContain('pkg:composer/<vendor>/<name>');
   });
 
   it('a rejected identifier exits 2, says why, and names the trusted issuer', () => {

@@ -71,6 +71,37 @@ describe('exit 0 — delegated', () => {
   });
 });
 
+describe('a Go module and a Composer package', () => {
+  it.each([
+    // A Go path keeps its capitals; the Composer name is written in Packagist's own (lowercase) form,
+    // since this CLI canonicalizes through the PUBLISHED verifier.
+    'pkg:golang/github.com/ProofHoldings/sdk-go',
+    'pkg:composer/proof-holdings/sdk',
+  ])('%s: a token the lookup found for it verifies here, exit 0', async (delegate) => {
+    const token = await signJwt(delegationClaims({ delegate }), key);
+    const net = await mockFetch({
+      [claimUrl(delegate)]: { json: claimAnswer(delegate, [{ token }]) },
+      [JWKS_URI]: jwks(key),
+      [STATUS_ENDPOINT]: { json: { valid: true } },
+    });
+    const report = await runCheck({ delegate, apiOrigin: API, fetch: net.fetch });
+    expect(report.delegate).toBe(delegate);
+    expect(report.exitCode).toBe(0);
+  });
+
+  it('a token for the Go module in another case claims nothing for this one, exit 1', async () => {
+    const asked = 'pkg:golang/github.com/proofholdings/sdk-go';
+    const token = await signJwt(delegationClaims({ delegate: 'pkg:golang/github.com/ProofHoldings/sdk-go' }), key);
+    const net = await mockFetch({
+      [claimUrl(asked)]: { json: claimAnswer(asked, [{ token }]) },
+      [JWKS_URI]: jwks(key),
+      [STATUS_ENDPOINT]: { json: { valid: true } },
+    });
+    const report = await runCheck({ delegate: asked, apiOrigin: API, fetch: net.fetch });
+    expect(report.exitCode).toBe(1);
+  });
+});
+
 describe('exit 1 — no delegation found', () => {
   it('the lookup found nothing: every place checked is reported', async () => {
     const report = await runCheck({ delegate: DELEGATE, apiOrigin: API, fetch: (await lookupWith([])).fetch });

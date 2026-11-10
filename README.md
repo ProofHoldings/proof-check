@@ -1,5 +1,7 @@
 # @proof-holdings/proof-check
 
+[![Proof of Delegation](https://proof.holdings/badge/npm/@proof-holdings/proof-check)](https://proof.holdings/npm/@proof-holdings/proof-check)
+
 Has a domain published a **Proof of Delegation** for this package or endpoint? Check it from the
 terminal, where the install decision is made:
 
@@ -40,8 +42,9 @@ proof-check <identifier> [--principal <domain>] [--json] [--api <origin>] [--jwk
 proof-check <identifier> --card <path-or-https-url> [--principal <domain>] [--json]
 ```
 
-- `<identifier>` — `pkg:npm/<name>`, `pkg:pypi/<name>` or `https://<host><path>`. No version: a
-  delegation covers the artifact, not one release.
+- `<identifier>` — `pkg:npm/<name>`, `pkg:pypi/<name>`, `pkg:golang/<module path>`,
+  `pkg:composer/<vendor>/<name>` or `https://<host><path>`. No version: a delegation covers the
+  artifact, not one release. A Go module path keeps its capitals; it names a different module otherwise.
 - `--card` — verify a server card or agent card you already have (for example the `server.json` in
   an installed package) instead of asking where to look.
 - `--json` — the full report as JSON.

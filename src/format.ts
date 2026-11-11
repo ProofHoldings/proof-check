@@ -1,4 +1,5 @@
 import type { CheckReport, CheckedToken } from './check.js';
+import type { CheckedProfileDelegation, CheckedProof, ProfileReport } from './profile.js';
 
 /**
  * The text report — the only place this tool composes a sentence. Its first line names the issuer
@@ -56,6 +57,7 @@ export function formatReport(report: CheckReport): string {
     lines.push(`Could not check: ${report.message ?? 'the check did not complete.'}`);
   }
   for (const token of failed) lines.push(tokenLine(token));
+  if (report.pageUrl) lines.push(`Page: ${report.pageUrl}`);
 
   if (report.locations.length > 0) {
     lines.push('');
@@ -67,6 +69,54 @@ export function formatReport(report: CheckReport): string {
       lines.push(`  - ${location.location}: ${result}${location.detail ? ` — ${location.detail}` : ''}`);
       if (location.url) lines.push(`    ${location.url}`);
     }
+  }
+  return `${lines.join('\n')}\n`;
+}
+
+const PROFILE_ANSWER_TEXT: Record<ProfileReport['answer'], string> = {
+  every_token_verified: 'Every token this profile publishes verified locally.',
+  a_token_did_not_verify: 'A token this profile publishes did not verify here — see below.',
+  nothing_to_check: 'This profile publishes no token to check: every value on it is masked or hidden.',
+  could_not_check: 'Could not check',
+};
+
+function proofLine(proof: CheckedProof): string {
+  const head = `  - ${proof.type} ${proof.value}`;
+  if (proof.outcome === null) return `${head}: no token published — the value is not printed in full`;
+  if (proof.outcome === 'verified' && proof.proof) {
+    const p = proof.proof;
+    const parts = ['verified locally', p.channel, p.verifiedAt ? `control shown ${day(p.verifiedAt)}` : null, `expires ${day(p.expiresAt)}`];
+    return `${head}: ${parts.filter(Boolean).join(' · ')}`;
+  }
+  return `${head}: ${RESULT_TEXT[proof.outcome] ?? proof.outcome} (${proof.reason ?? 'unknown'}) — ${proof.message ?? ''}`.trimEnd();
+}
+
+function profileDelegationLine(delegation: CheckedProfileDelegation): string[] {
+  const head = `  - ${delegation.delegate}, from ${delegation.principal}`;
+  if (delegation.outcome === 'verified') {
+    return [`${head}: verified locally`, ...delegation.check.tokens.filter((token) => token.outcome === 'verified').map((token) => `  ${tokenLine(token)}`)];
+  }
+  const why = delegation.check.answer === 'could_not_check' ? delegation.check.message ?? 'the check did not complete' : 'no delegation from this domain verified here';
+  return [`${head}: ${RESULT_TEXT[delegation.outcome]} — ${why}`];
+}
+
+export function formatProfileReport(report: ProfileReport): string {
+  const lines: string[] = [
+    `Trusting issuer ${report.issuer.issuer} — keys ${report.issuer.jwksUri}${report.issuer.statusEndpoint ? `, status ${report.issuer.statusEndpoint}` : ''}`,
+    `Profile: ${report.profile} (read from ${report.apiOrigin})`,
+    '',
+    report.answer === 'could_not_check'
+      ? `Could not check: ${report.message ?? 'the check did not complete.'}`
+      : PROFILE_ANSWER_TEXT[report.answer],
+  ];
+  if (report.proofs.length > 0) {
+    lines.push('', 'Proofs (each token checked against the value as printed):');
+    for (const proof of report.proofs) lines.push(proofLine(proof));
+  }
+  if (report.delegations.length > 0) {
+    lines.push('', 'Delegations (each looked up and checked like `proof-check <artifact> --principal <domain>`):');
+    for (const delegation of report.delegations) lines.push(...profileDelegationLine(delegation));
+    lines.push(`  ${ATTESTS}`);
   }
   return `${lines.join('\n')}\n`;
 }

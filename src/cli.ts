@@ -5,6 +5,7 @@
  * Usage:
  *   proof-check <identifier> [--principal <domain>] [--json] [--api <origin>] [--jwks <url>]
  *   proof-check <identifier> --card <path-or-https-url> [--principal <domain>] [--json]
+ *   proof-check https://proof.holdings/u/<username> [--json] [--api <origin>] [--jwks <url>]
  *
  * `<identifier>` is `pkg:npm/<name>`, `pkg:pypi/<name>`, `pkg:golang/<module path>`,
  * `pkg:composer/<vendor>/<name>` or `https://<host><path>`, and it is the ONLY
@@ -15,7 +16,8 @@
 
 import { loadCard } from './card-source.js';
 import { runCardCheck, runCheck, type CheckReport } from './check.js';
-import { formatReport } from './format.js';
+import { formatProfileReport, formatReport } from './format.js';
+import { parseProfileUrl, runProfileCheck } from './profile.js';
 
 const USAGE = `Usage: proof-check <identifier> [options]
 
@@ -25,6 +27,9 @@ identifier you typed.
 
   <identifier>          pkg:npm/<name>, pkg:pypi/<name>, pkg:golang/<module path>,
                         pkg:composer/<vendor>/<name> or https://<host><path>
+                        — or a profile, https://proof.holdings/u/<username> (or /p/<id>):
+                        every token it publishes is checked here, each proof against the
+                        value as printed, each delegation as above
 
 Options:
   --principal <domain>  only count a delegation from this domain
@@ -35,6 +40,7 @@ Options:
   -h, --help            show this help
 
 Exit codes: 0 delegated · 1 no delegation found · 2 could not check
+For a profile: 0 every token verified · 1 a token did not verify, or none published · 2 could not check
 `;
 
 interface CliArgs {
@@ -97,6 +103,13 @@ function finish(output: string, code: number): void {
 async function main(): Promise<void> {
   const args = parseArgs(process.argv.slice(2));
   if (!args.identifier) usageError('pass the identifier to check');
+
+  if (parseProfileUrl(args.identifier)) {
+    if (args.card || args.principal) usageError('--card and --principal do not apply to a profile address');
+    const profileReport = await runProfileCheck({ url: args.identifier, apiOrigin: args.api, jwksUri: args.jwks });
+    finish(args.json ? `${JSON.stringify(profileReport, null, 2)}\n` : formatProfileReport(profileReport), profileReport.exitCode);
+    return;
+  }
 
   let report: CheckReport;
   if (args.card) {

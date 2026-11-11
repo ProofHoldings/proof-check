@@ -62,6 +62,20 @@ export interface CheckReport {
   message: string | null;
   tokens: CheckedToken[];
   locations: CheckedLocation[];
+  /** The artifact's page on proof.holdings — only when the lookup asked was ours; else null. */
+  pageUrl?: string | null;
+}
+
+const SITE_ORIGIN = 'https://proof.holdings';
+
+/**
+ * The artifact's page on proof.holdings, from the lookup's `artifact_path` (m-public-profile-sheet SC-32).
+ * Only for OUR lookup — another API's path says nothing about our site — and only a plain site path.
+ */
+export function pageUrlOf(apiOrigin: string | null, artifactPath: string | null): string | null {
+  if (apiOrigin !== DEFAULT_API_ORIGIN || !artifactPath) return null;
+  if (!artifactPath.startsWith('/') || artifactPath.startsWith('//')) return null;
+  return `${SITE_ORIGIN}${artifactPath}`;
 }
 
 export interface CheckOptions {
@@ -190,6 +204,7 @@ export async function runCheck(options: CheckOptions): Promise<CheckReport> {
 
   report = {
     ...report,
+    pageUrl: pageUrlOf(apiOrigin, str(body.artifact_path)),
     checkedAt: str(body.checked_at),
     locations: body.locations.filter(isRecord).map((location) => ({
       id: str(location.id) ?? 'unknown',

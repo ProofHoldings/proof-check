@@ -139,6 +139,14 @@ describe('exit 1 — no delegation found', () => {
     expect(report.tokens[0].outcome).toBe('invalid');
   });
 
+  it('a token the issuer reports issued in test mode: no delegation found, not could-not-check', async () => {
+    const token = await signJwt(delegationClaims(), key);
+    const issuerAnswer = { valid: false, token_type: 'delegation', reason: 'test_environment' };
+    const report = await runCheck({ delegate: DELEGATE, apiOrigin: API, fetch: (await lookupWith([{ token }], issuerAnswer)).fetch });
+    expect(report.exitCode).toBe(1);
+    expect(report.tokens[0]).toMatchObject({ outcome: 'invalid', reason: 'test_environment' });
+  });
+
   it('--principal pins the signer: a delegation from another domain does not count', async () => {
     const token = await signJwt(delegationClaims(), key);
     const report = await runCheck({ delegate: DELEGATE, apiOrigin: API, principal: 'postmark.example', fetch: (await lookupWith([{ token }])).fetch });
